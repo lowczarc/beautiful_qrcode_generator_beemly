@@ -48,12 +48,25 @@ fn copy_image_into_another(dest: &mut ImageBuff8, src: &ImageBuff8, x: u32, y: u
 }
 
 pub fn qrcode_matrix(message: &str) -> Vec<Vec<bool>> {
-    qrcode_generator::to_matrix(message, QrCodeEcc::High).expect("Unable to create QR Code for this message")
+    let mut qrcode_matrix = qrcode_generator::to_matrix(message, QrCodeEcc::High).expect("Unable to create QR Code for this message");
+
+    for line_id in 0..qrcode_matrix.len() {
+        for block_id in 0..qrcode_matrix[line_id].len() {
+            if (line_id < 7 && block_id < 7)
+                || (line_id >= qrcode_matrix.len() - 7 && block_id < 7)
+                || (line_id < 7 && block_id >= qrcode_matrix[line_id].len() - 7)
+                || (line_id <= (qrcode_matrix.len() / 2) + 4 && line_id >= (qrcode_matrix.len() / 2) - 4
+                    && block_id <= (qrcode_matrix[line_id].len() / 2) + 4 && block_id >= (qrcode_matrix[line_id].len() / 2) - 4) {
+                qrcode_matrix[line_id][block_id] = false;
+            }
+        }
+    }
+    qrcode_matrix
 }
 
 pub fn qrcode_generate(message: &str) -> ImageBuff8 {
     let qrcode_matrix = qrcode_matrix(message);
-    let mut qrcode_image = ImageBuff8::from_fn(qrcode_matrix[0].len() as u32 * 35, qrcode_matrix.len() as u32 * 35, |x: u32, y: u32| { Rgb{ data: [255, 255, 255] }});
+    let mut qrcode_image = ImageBuff8::from_fn(qrcode_matrix[0].len() as u32 * 35, qrcode_matrix.len() as u32 * 35, |_x: u32, _y: u32| { Rgb { data: [255, 255, 255] } });
 
     let eye = open(Path::new(&format!("{}assets/eye.png", CARGO_DIR))).unwrap();
     let image_center = open(Path::new(&format!("{}assets/image_center.png", CARGO_DIR))).unwrap();
@@ -66,13 +79,6 @@ pub fn qrcode_generate(message: &str) -> ImageBuff8 {
 
     for line_id in 0..qrcode_matrix.len() {
         for block_id in 0..qrcode_matrix[line_id].len() {
-            if (line_id < 7 && block_id < 7)
-                || (line_id >= qrcode_matrix.len() - 7 && block_id < 7)
-                || (line_id < 7 && block_id >= qrcode_matrix[line_id].len() - 7)
-                || (line_id <= (qrcode_matrix.len() / 2) + 4 && line_id >= (qrcode_matrix.len() / 2) - 4
-                    && block_id <= (qrcode_matrix[line_id].len() / 2) + 4 && block_id >= (qrcode_matrix[line_id].len() / 2) - 4) {
-                continue;
-            }
             if qrcode_matrix[line_id][block_id] {
                 let bits = [
                     line_id != 0 && qrcode_matrix[line_id - 1][block_id],
