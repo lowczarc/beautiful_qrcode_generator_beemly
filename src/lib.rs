@@ -3,7 +3,7 @@ use std::path::Path;
 use qrcode_generator::QrCodeEcc;
 use image::{DynamicImage, ImageBuffer, open, Rgb};
 
-type ImageBuff8 = ImageBuffer<Rgb<u8>, Vec<u8>>;
+pub type ImageBuff8 = ImageBuffer<Rgb<u8>, Vec<u8>>;
 
 fn get_block(bits: [bool; 4], block_table: &[DynamicImage; 4]) -> DynamicImage {
     let (mode, rotation) = {
